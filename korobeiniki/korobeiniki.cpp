@@ -3,8 +3,11 @@
 
 #include <iostream>
 #include <thread>
+#include <vector>
+
 using namespace std;
 
+#include <stdio.h>
 #include <Windows.h>
 
 
@@ -118,6 +121,13 @@ int main()
 	int nCurrentRotation = 0;
 	int nCurrentX = nFieldWidth / 2;
 	int nCurrentY = 0;
+	int nSpeed = 20;
+	int nSpeedCount = 0;
+	bool bForceDown = false;
+	bool bRotateHold = true;
+	int nPieceCount = 0;
+	int nScore = 0;
+	vector<int> vLines;
 
 	bool bKey[4];
 
@@ -125,6 +135,9 @@ int main()
 	{
 		// GAME TIMING =========================
 		this_thread::sleep_for(50ms);
+		nSpeedCount++;
+		bForceDown = (nSpeedCount == nSpeed);
+
 		// INPUT ===============================
 		for (int k = 0; k < 4; k++)
 			bKey[k] = (0x8000 & GetAsyncKeyState((unsigned char)("\x27\x25\x28Z"[k]))) != 0;
@@ -133,6 +146,66 @@ int main()
 		nCurrentX += (bKey[0] && DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX + 1, nCurrentY)) ? 1 : 0;
 		nCurrentX -= (bKey[1] && DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX - 1, nCurrentY)) ? 1 : 0;
 		nCurrentY += (bKey[2] && DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX, nCurrentY + 1)) ? 1 : 0;
+
+		// Rotate, but latch to stop wild spinning
+		if (bKey[3])
+		{
+			nCurrentRotation += (bRotateHold && DoesPieceFit(nCurrentPiece, nCurrentRotation + 1, nCurrentX, nCurrentY)) ? 1 : 0;
+			bRotateHold = false;
+		}
+		else
+			bRotateHold = true;
+
+		if (bForceDown)
+		{
+			// Update difficulty every 50 pieces
+			nSpeedCount = 0;
+			nPieceCount++;
+			if (nPieceCount % 50 == 0)
+				if (nSpeed >= 10) nSpeed--;
+
+			if (DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX, nCurrentY + 1))
+				nCurrentY++; // It can, so do it!
+			else
+			{
+				// Lock the current piece in the field
+				for (int px = 0; px < 4; px++)
+					for (int py = 0; py < 4; py++)
+						if (tetromino[nCurrentPiece][Rotate(px, py, nCurrentRotation)] != L'.')
+							pField[(nCurrentY + py) * nFieldWidth + (nCurrentX + px)] = nCurrentPiece + 1;
+				// Check have we got any lines
+				for (int py = 0; py < 4; py++)
+					if (nCurrentY + py < nFieldHeight - 1)
+					{
+						bool bLine = true;
+						for (int px = 1; px < nFieldWidth - 1; px++)
+							bLine &= (pField[(nCurrentY + py) * nFieldWidth + px]) != 0;
+
+						if (bLine)
+						{
+							// Remove Line, set to =
+							for (int px = 1; px < nFieldWidth - 1; px++)
+								pField[(nCurrentY + py) * nFieldWidth + px] = 8;
+								vLines.push_back(nCurrentY + py);
+						}
+					}
+
+				nScore += 25;
+				 if (!vLines.empty())	nScore += (1 << vLines.size()) * 100;
+				// Choose the next piece
+				nCurrentX = nFieldWidth / 2;
+				nCurrentY = 0;
+				nCurrentRotation = 0;
+				nCurrentPiece = rand() % 7;
+
+				// If piece does not fit
+
+				bGameOver = !DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX, nCurrentY);
+			}
+			
+			nSpeedCount = 0;
+		}
+
 		// RENDER OUTPUT =======================
 
 		// Draw Field
@@ -146,6 +219,27 @@ int main()
 			for (int py = 0; py < 4; py++)
 				if (tetromino[nCurrentPiece][Rotate(px, py, nCurrentRotation)] != L'.')
 					screen[(nCurrentY + py + 2) * nScreenWidth + (nCurrentX + px + 2)] = nCurrentPiece + 65;
+
+		// Draw Score
+		swprintf_s(&screen[2 * nScreenWidth + nFieldWidth + 6], 16, L"SCORE: %8d", nScore);
+
+		if (!vLines.empty())
+		{
+			// Display Frame (cheekily to draw lines)
+			WriteConsoleOutputCharacter(hConsole, screen, nScreenWidth * nScreenHeight, { 0,0 }, &dwBytesWritten);
+			this_thread::sleep_for(400ms); // Delay a bit
+
+			for (auto& v : vLines)
+				for (int px = 1; px < nFieldWidth - 1; px++)
+				{
+					for (int py = v; py > 0; py--)
+						pField[py * nFieldWidth + px] = pField[(py - 1) * nFieldWidth + px];
+					pField[px] = 0;
+				}
+
+			vLines.clear();
+		}
+
 		// Display Frame
 		WriteConsoleOutputCharacter(hConsole, screen, nScreenWidth * nScreenHeight, { 0,0 }, &dwBytesWritten);
 	}
