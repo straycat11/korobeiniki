@@ -55,7 +55,7 @@ bool DoesPieceFit(int nTetromino, int nRotation, int nPosX, int nPosY)
 
 			if (nPosX + px >= 0 && nPosX + py < nFieldHeight) 
 			{
-				if (tetromino[nTetromino][pi] = L'X' && pField[fi] != 0)
+				if (tetromino[nTetromino][pi] != L'.' && pField[fi] != 0)
 					return false; // fail on first hit
 			}
 		}
@@ -144,7 +144,7 @@ int main()
 		// Draw current piece
 		for (int px = 0; px < 4; px++)
 			for (int py = 0; py < 4; py++)
-				if (tetromino[nCurrentPiece][Rotate(px, py, nCurrentRotation)] == L'X')
+				if (tetromino[nCurrentPiece][Rotate(px, py, nCurrentRotation)] != L'.')
 					screen[(nCurrentY + py + 2) * nScreenWidth + (nCurrentX + px + 2)] = nCurrentPiece + 65;
 		// Display Frame
 		WriteConsoleOutputCharacter(hConsole, screen, nScreenWidth * nScreenHeight, { 0,0 }, &dwBytesWritten);
