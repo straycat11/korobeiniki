@@ -68,9 +68,12 @@ bool DoesPieceFit(int nTetromino, int nRotation, int nPosX, int nPosY)
 		}
 	return true;
 }
+
+
 int main()
 {
 	// create assets
+	/*
 	tetromino[0].append(L"..X.");
 	tetromino[0].append(L"..X.");
 	tetromino[0].append(L"..X.");
@@ -105,6 +108,14 @@ int main()
 	tetromino[6].append(L"..X.");
 	tetromino[6].append(L"..X.");
 	tetromino[6].append(L"..X.");
+	*/
+	tetromino[0].append(L"..X...X...X...X."); // Tetronimos 4x4
+	tetromino[1].append(L"..X..XX...X.....");
+	tetromino[2].append(L".....XX..XX.....");
+	tetromino[3].append(L"..X..XX..X......");
+	tetromino[4].append(L".X...XX...X.....");
+	tetromino[5].append(L".X...X...XX.....");
+	tetromino[6].append(L"..X...X..XX.....");
 
 	pField = new unsigned char[nFieldWidth * nFieldHeight];
 	for (int x = 0; x < nFieldWidth; x++) // Board Boundary
