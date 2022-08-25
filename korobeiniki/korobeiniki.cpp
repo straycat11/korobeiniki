@@ -62,6 +62,8 @@ bool DoesPieceFit(int nTetromino, int nRotation, int nPosX, int nPosY)
 				{
 					// In Bounds so do collision check
 					if (tetromino[nTetromino][pi] != L'.' && pField[fi] != 0)
+						// Wait for some time when the piece hits bottom so that the player has some time to move the piece around.
+//						this_thread::sleep_for(300ms);
 						return false; // fail on first hit
 				}
 			}
@@ -201,24 +203,29 @@ int main()
 							// Remove Line, set to =
 							for (int px = 1; px < nFieldWidth - 1; px++)
 								pField[(nCurrentY + py) * nFieldWidth + px] = 8;
-								vLines.push_back(nCurrentY + py);
+							vLines.push_back(nCurrentY + py);
 						}
 					}
 
 				nScore += 25;
-				 if (!vLines.empty())	nScore += (1 << vLines.size()) * 100;
+				if (!vLines.empty())	nScore += (1 << vLines.size()) * 100;
 				// Choose the next piece
-				nCurrentX = nFieldWidth / 2;
-				nCurrentY = 0;
-				nCurrentRotation = 0;
-				nCurrentPiece = rand() % 7;
+					nCurrentX = nFieldWidth / 2;
+					nCurrentY = 0;
+					nCurrentRotation = 0;
+					nCurrentPiece = rand() % 7;
+				
 
 				// If piece does not fit
 
 				bGameOver = !DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX, nCurrentY);
 			}
 			
-			nSpeedCount = 0;
+
+		if (nSpeedCount / nSpeed > 3)
+			{
+				nSpeedCount = 0;
+			}
 		}
 
 		// RENDER OUTPUT =======================
