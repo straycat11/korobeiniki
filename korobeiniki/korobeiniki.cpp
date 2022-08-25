@@ -56,10 +56,14 @@ bool DoesPieceFit(int nTetromino, int nRotation, int nPosX, int nPosY)
 			// Get index into field
 			int fi = (nPosY + py) * nFieldWidth + (nPosX + px);
 
-			if (nPosX + px >= 0 && nPosX + py < nFieldHeight) 
+			if (nPosX + px >= 0 && nPosX + px < nFieldWidth)
 			{
-				if (tetromino[nTetromino][pi] != L'.' && pField[fi] != 0)
-					return false; // fail on first hit
+				if (nPosY + py >= 0 && nPosY + py < nFieldHeight)
+				{
+					// In Bounds so do collision check
+					if (tetromino[nTetromino][pi] != L'.' && pField[fi] != 0)
+						return false; // fail on first hit
+				}
 			}
 		}
 	return true;
